@@ -7,13 +7,28 @@ const FPS = 10;
 (async () => {
   await init();
 
-  const SNEK_START_INDEX = Math.floor(Math.random() * WORLD_WIDTH ** 2);
+  //const SNEK_START_INDEX = Math.floor(Math.random() * WORLD_WIDTH ** 2);
+  const SNEK_START_INDEX = Date.now() % (WORLD_WIDTH * WORLD_WIDTH);
   const world = World.new(WORLD_WIDTH, SNEK_START_INDEX);
   const width = world.width();
   const canvas = <HTMLCanvasElement>document.querySelector("#game-board");
   const context = canvas.getContext("2d");
   canvas.height = width * CELL_SIZE;
   canvas.width = width * CELL_SIZE;
+
+  document.addEventListener("keydown", (e) => {
+    console.log(e.code);
+    switch (e.code) {
+      case "KeyW":
+        break;
+      case "KeyA":
+        break;
+      case "KeyS":
+        break;
+      case "KeyD":
+        break;
+    }
+  });
 
   drawWorld(context, width, CELL_SIZE);
   drawSnake(world, width, context, CELL_SIZE);
