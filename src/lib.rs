@@ -1,8 +1,32 @@
 use wasm_bindgen::prelude::*;
+use wee_alloc::WeeAlloc;
 
-// Use `wee_alloc` as the global allocator.
 #[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+static ALLOC: WeeAlloc = WeeAlloc::INIT;
+
+#[derive(PartialEq)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
+struct SnakeCell(usize);
+
+struct Snake {
+    body: Vec<SnakeCell>,
+    direction: Direction,
+}
+
+impl Snake {
+    fn new(spawn_index: usize) -> Snake {
+        Snake {
+            body: vec![SnakeCell(spawn_index)],
+            direction: Direction::Down,
+        }
+    }
+}
 
 #[wasm_bindgen]
 pub struct World {
@@ -31,45 +55,28 @@ impl World {
 
     pub fn update(&mut self) {
         let snake_idx = self.snake_head();
-        let row = snake_idx / self.width;
+        let (row, col) = self.cell_to_index(snake_idx);
+        let (row, col) = match self.snake.direction {
+            Direction::Right => (row, (col + 1) % self.width),
+            Direction::Left => (row, (col - 1) % self.width),
+            Direction::Up => ((row - 1) % self.width, col),
+            Direction::Down => ((row + 1) % self.width, col),
+        };
+        let next_idx = self.index_cell(row, col);
+        self.set_snake_head(next_idx);
+    }
 
-        if self.snake.direction == Direction::Right {
-            let next_col = (snake_idx + 1) % self.width;
-            self.snake.body[0].0 = (row * self.width) + next_col;
-        }
-        if self.snake.direction == Direction::Left {
-            let next_col = (snake_idx - 1) % self.width;
-            self.snake.body[0].0 = (row * self.width) + next_col;
-        }
-        if self.snake.direction == Direction::Down {
-            self.snake.body[0].0 = (snake_idx + self.width) % (self.size);
-        }
-        if self.snake.direction == Direction::Up {
-            self.snake.body[0].0 = (snake_idx - self.width) % (self.size);
-        }
+    fn set_snake_head(&mut self, idx: usize) {
+        self.snake.body[0].0 = idx
+    }
+
+    fn cell_to_index(&self, idx: usize) -> (usize, usize) {
+        (idx / self.width, idx % self.width)
+    }
+
+    fn index_cell(&self, row: usize, col: usize) -> usize {
+        (row * self.width) + col
     }
 }
 
-struct SnakeCell(usize);
-
-struct Snake {
-    body: Vec<SnakeCell>,
-    direction: Direction,
-}
-
-impl Snake {
-    fn new(spawn_index: usize) -> Snake {
-        Snake {
-            body: vec![SnakeCell(spawn_index)],
-            direction: Direction::Left,
-        }
-    }
-}
-#[derive(PartialEq)]
-enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
 // wasm-pack build --target web
